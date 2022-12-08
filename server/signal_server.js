@@ -18,7 +18,7 @@ const SIGNAL_TYPE_CANDIDATE = "candidate";
 //candidate 发送candidate 给对端peer
 var port = 10001;
 
-var mRootTableMap = new HashMap();
+var mRoomTableMap = new HashMap();
 
 function Client(uid, conn, roomId) {
     this.uid = uid;
@@ -30,11 +30,11 @@ function handlejoin(message, conn) {
     let uid = message.uid;
     console.log("uid " + uid + " try to join room " + roomId);
 
-    let roomMap = mRootTableMap.get(roomId);
+    let roomMap = mRoomTableMap.get(roomId);
 
     if (roomMap == null) {
         roomMap = new HashMap();
-        mRootTableMap.set(roomId, roomMap);
+        mRoomTableMap.set(roomId, roomMap);
     }
     if (roomMap.count() >= 2) {
         console.error("roomId: " + roomId + "  已经有两人存在，请使用其他房间");
@@ -73,6 +73,34 @@ function handlejoin(message, conn) {
     }
 
 }
+function handleLeave(message) {
+    let roomId = message.roomId;
+    let uid = message.uid;
+    console.log("uid " + uid + " try to leave room " + roomId);
+    let roomMap = mRoomTableMap.get(roomId);
+    if (roomMap == null) {
+        console.error("can't find the roomId " + roomId);
+        return;
+    }
+    roomMap.remove(uid); //从数据源中删除
+    if (roomMap.count() >= 1) {
+        //房间还存在其他人,发送离开消息给其他人
+        roomMap.forEach(function (value, key) {
+            let remoteUid = key;
+            let remoteClient = value;
+            let jsonMsg = {
+                'cmd': SIGNAL_TYPE_PEER_LEAVE,
+                'remoteUid': uid //谁离开而来就发送谁的id
+            };
+            let msg = JSON.stringify(jsonMsg);
+            if (remoteClient) {
+                //通知其他人，某个人离开了
+                console.info("notify peer: " + remoteUid + ", ui + " + uid + " leave");
+                remoteClient.conn.sendText(msg);
+            }
+        });
+    }
+}
 var server = ws.createServer(function (conn) {
     console.log("有新的连接");
     conn.sendText("我收到你的连接了..");
@@ -82,6 +110,9 @@ var server = ws.createServer(function (conn) {
         switch (jsonMsg.cmd) {
             case SIGNAL_TYPE_JOIN:
                 handlejoin(jsonMsg, conn);
+                break;
+            case SIGNAL_TYPE_LEAVE:
+                handleLeave(jsonMsg);
                 break;
         }
     });

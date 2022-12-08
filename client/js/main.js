@@ -80,7 +80,10 @@ WebRtcEngine.prototype.onMessage = function (event) {
             break;
         case SIGNAL_TYPE_RESP_JOIN:  // resp-join 收到加入者是谁
             handleResponseJoin();
-            break
+            break;
+        case SIGNAL_TYPE_PEER_LEAVE:
+            handleRemotePeerLeave();
+            break;
     }
 }
 
@@ -109,6 +112,11 @@ function handleRemoteNewPeer(message) {
 function handleResponseJoin(message) {
     console.log("handleResponseJoin , remoteUid " + message.remoteUid);
 }
+function handleRemotePeerLeave(message) {
+    //收到离开事件
+    console.log("handleRemotePeerLeave , remoteUid " + message.remoteUid);
+    remoteVideo.srcObject = null;
+}
 
 mWebRtcEngine = new WebRtcEngine("ws://localhost:10001");
 
@@ -130,6 +138,7 @@ function initLocalStream() {
             alert("get user media error" + e.name);
         });
 }
+
 document.getElementById('joinBtn').onclick = function () {
     console.log("加入按钮点击");
     roomId = document.getElementById('roomId').value;
@@ -140,4 +149,20 @@ document.getElementById('joinBtn').onclick = function () {
     //初始化本地码流
     // initLocalStream();
     doJoin(roomId);
+}
+
+function doLeave() {
+    let jsonMsg = {
+        'cmd': SIGNAL_TYPE_LEAVE,
+        'roomId': roomId,
+        'uid': localUserId
+    };
+    let message = JSON.stringify(jsonMsg);
+    mWebRtcEngine.sendMessage(message);
+    console.log("do doLeave >> message " + message);
+}
+document.getElementById('leaveBtn').onclick = function () {
+    console.log("离开按钮被点击");
+    //
+    doLeave();
 }
