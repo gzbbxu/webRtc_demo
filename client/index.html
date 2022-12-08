@@ -1,0 +1,21 @@
+<html>
+    <head>
+        jianguo webRtc demo
+    </head>
+    <h1>webRtc demo</h1>
+    
+    <div id="buttons">
+        <input id="zero-roomId" type="text" placeholder="请输入房间ID" maxlength="40"/>
+        <button id="joinBtn" type="button">加入</button>
+        <button id="leaveBtn" type="button">离开</button>    
+    </div>
+    <!-- autoplay 设置为自动播放的 video 元素  -->
+    <!-- muted 关闭视频的声音  -->
+     <!-- 有时候在微信网页端插入<Video>标签的时候,不希望用户来拖动进度条的话,可以直接使用 playsinline属性,webkit-playsinline属性  -->
+    <div id="videos">
+        <video id="localVideo" autoplay muted playsinline>本地窗口</video>
+        <video id="remoteVideo" autoplay playsinline>远端窗口</video>
+    </div>
+    <script src="js/main.js"></script>
+    <script src="js/adapter-latest.js"></script>
+</html>
