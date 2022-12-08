@@ -1,7 +1,29 @@
 'use strict';
+
+//join 主动加入房间
+//leave 主动离开房间
+//new-peer 有人加入房间，通知已经在房间的人
+//peer-leave 有人离开房间，通知已经在房间的人
+//offer 发送offer 给对端peer
+//answer 发送offer 给对端peer
+//candidate 发送candidate 给对端peer
+
+const SIGNAL_TYPE_JOIN = "join";
+const SIGNAL_TYPE_RESP_JOIN = "resp-join";  // 告知加入者对方是谁
+const SIGNAL_TYPE_LEAVE = "leave";
+const SIGNAL_TYPE_NEW_PEER = "new-peer";
+const SIGNAL_TYPE_PEER_LEAVE = "peer-leave";
+const SIGNAL_TYPE_OFFER = "offer";
+const SIGNAL_TYPE_ANSWER = "answer";
+const SIGNAL_TYPE_CANDIDATE = "candidate";
+
+//本地userId 36进制
+var localUserId = Math.random().toString(36).substring(2);
+var remoteUserId = -1;
 var localVideo = document.querySelector('#localVideo');
 var remoteVideo = document.querySelector('#remoteVideo');
 var loclalStream = null;
+var roomId = 0;
 
 var mWebRtcEngine;
 //类
@@ -10,8 +32,6 @@ var WebRtcEngine = function (wsUrl) {
     mWebRtcEngine = this;
     return this;
 }
-
-
 
 WebRtcEngine.prototype.init = function (wsUrl) {
     //增加属性wsUrl
@@ -39,10 +59,29 @@ WebRtcEngine.prototype.createWebsocket = function () {
     }
 }
 
-
+function doJoin(roomId) {
+    var jsonMsg = {
+        'cmd': 'join',
+        'roomId': roomId,
+        'uid': localUserId,
+    };
+    //做序列化
+    let message = JSON.stringify(jsonMsg);
+    mWebRtcEngine.sendMessage(message);
+    console.log("do jion >> message " + message);
+}
 
 WebRtcEngine.prototype.onMessage = function (event) {
     console.log("websocket onMessage " + event.data);
+    let jsonMsg = JSON.parse(event.data);
+    switch (jsonMsg.cmd) {
+        case SIGNAL_TYPE_NEW_PEER: //new-peer 有新的user 进入房间
+            handleRemoteNewPeer(jsonMsg);
+            break;
+        case SIGNAL_TYPE_RESP_JOIN:  // resp-join 收到加入者是谁
+            handleResponseJoin();
+            break
+    }
 }
 
 WebRtcEngine.prototype.onOpen = function () {
@@ -57,15 +96,30 @@ WebRtcEngine.prototype.onClose = function (event) {
     console.log("websocket onClose " + event.code + " >>> reason >>> " + event.reason);
 }
 
+WebRtcEngine.prototype.sendMessage = function (message) {
+    this.signaling.send(message);
+}
+
+
+function handleRemoteNewPeer(message) {
+    console.log("handleRemoteNewPeer , remoteUid " + message.remoteUid);
+    remoteUserId = message.remoteUid;
+}
+
+function handleResponseJoin(message) {
+    console.log("handleResponseJoin , remoteUid " + message.remoteUid);
+}
+
 mWebRtcEngine = new WebRtcEngine("ws://localhost:10001");
 
 mWebRtcEngine.createWebsocket();
 
-
 function openLocalStream(stream) {
+    doJoin(roomId);
     localVideo.srcObject = stream;
     loclalStream = stream;
 }
+
 function initLocalStream() {
     navigator.mediaDevices.getUserMedia({
         audio: true,
@@ -78,6 +132,12 @@ function initLocalStream() {
 }
 document.getElementById('joinBtn').onclick = function () {
     console.log("加入按钮点击");
+    roomId = document.getElementById('roomId').value;
+    if (roomId == "" || roomId == "请输入房间ID") {
+        alert("请输入房间ID");
+        return;
+    }
     //初始化本地码流
-
+    // initLocalStream();
+    doJoin(roomId);
 }

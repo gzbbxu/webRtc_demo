@@ -13,6 +13,7 @@
   "author": "zhouke",
   "license": "ISC",
   "dependencies": {
+    "hashmap": "^2.4.0",
     "nodejs-websocket": "^1.7.2"
   }
 }
