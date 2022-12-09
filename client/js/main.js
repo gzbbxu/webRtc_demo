@@ -58,7 +58,7 @@ WebRtcEngine.prototype.createWebsocket = function () {
         mWebRtcEngine.onClose(ev);
     }
 }
-
+  
 function doJoin(roomId) {
     var jsonMsg = {
         'cmd': 'join',

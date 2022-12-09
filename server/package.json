@@ -15,5 +15,8 @@
   "dependencies": {
     "hashmap": "^2.4.0",
     "nodejs-websocket": "^1.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.12"
   }
 }
